@@ -5,7 +5,8 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "ms-python.python"
+                "ms-python.python",
+                "github.copilot-chat"
             ],
             "settings": {
                 "terminal.integrated.copyOnSelection": true
