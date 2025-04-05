@@ -31,7 +31,7 @@ def print_calendars(calendars):
         for c in calendars:
             logger.debug("    Name: %-36s  URL: %s", c.name, c.url)
     else:
-        logger.debug("Your principal has no calendars")
+        logger.info("Your principal has no calendars")
 
 def update_or_add_word_to_emoji_dict(word,emoji):
     """
@@ -39,7 +39,7 @@ def update_or_add_word_to_emoji_dict(word,emoji):
     If the word already exists in the emoji_dict, no changes are made.
     """
     emoji_dict[word] = emoji
-    logger.debug("Adding '%s' to emoji_dict with emoji '%s'.", word, emoji)
+    logger.info("Adding '%s' to emoji_dict with emoji '%s'.", word, emoji)
     with open("config/emoji_dict.json", "w", encoding="utf-8") as emoji_file:
         json.dump(emoji_dict, emoji_file, indent=4, ensure_ascii=False)
     return True
@@ -127,7 +127,6 @@ def process_event(event):
         event_name = event_name[1:]  # Remove the first character (default emoji) from the event name
         summary_parts = event_name.split(" ")
         emoji = words_to_emoji(summary_parts)
-        logger.debug("This event starts with the default emoji, the emoji available is: %s", emoji)
         if not emoji:
             # no emoji found, do nothing (already has the default emoji)
             pass
@@ -135,6 +134,7 @@ def process_event(event):
             # no emoji found, do nothing (already has the default emoji)
             pass
         elif emoji:
+            logger.info("Event %s, updated emoji to: %s",event_name emoji)
             event.vobject_instance.vevent.summary.value = emoji + " " + event_name
             event.save()
     else:
@@ -179,4 +179,4 @@ if __name__ == "__main__":
         for event in events:
             process_event(event)
 
-        logger.debug("End of script")
+        logger.info("sync done")
