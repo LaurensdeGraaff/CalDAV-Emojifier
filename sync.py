@@ -25,6 +25,13 @@ password = config["password"]
 headers = {"X-MY-CUSTOMER-HEADER": "123"}
 calendar_to_sync = config["calendar_to_sync"]
 
+def is_emoji(character):
+    """
+    Somewhat check if this is an emoji
+    """    
+    character = character.encode("unicode-escape").decode("utf-8") #decode it to utf-8
+    return (character.startswith("\\U") or character.startswith("\\u")) # if the character starts with \U or \u, it is an emoji
+    
 def print_calendars(calendars):
     if calendars:
         logger.info("Your principal has %i calendars:", len(calendars))
@@ -38,8 +45,11 @@ def update_or_add_word_to_emoji_dict(word,emoji):
     Update the emoji_dict with a new word and emoji.
     If the word already exists in the emoji_dict, no changes are made.
     """
+    if word in emoji_dict:
+        logger.info("Updating '%s' emoji from '%s' to '%s'.", word, emoji_dict[word], emoji)
+    else:
+        logger.info("Adding new word '%s' with emoji '%s'.", word, emoji)
     emoji_dict[word] = emoji
-    logger.info("Adding '%s' to emoji_dict with emoji '%s'.", word, emoji)
     with open("config/emoji_dict.json", "w", encoding="utf-8") as emoji_file:
         json.dump(emoji_dict, emoji_file, indent=4, ensure_ascii=False)
     return True
@@ -113,13 +123,16 @@ def words_to_emoji(words):
 
 def process_event(event):
     """Process a single calendar event."""
+    
     event_name = event.icalendar_component.get("summary")
     logger.debug("##Event: %s", event_name)
-    if event_name[0].isalpha(): #the event name starts with a letter
+    #if event_name[0].isalpha(): #the event name starts with a letter
+    if not is_emoji(event_name[0]):
         logger.debug("This event does not start with an emoji, let's add that")
         summary_parts = event_name.split(" ")
         logger.debug("Words: %s", summary_parts)
         emoji = words_to_emoji(summary_parts)
+        logger.info("Event %s, updated emoji to: %s",event.icalendar_component.get("summary"), emoji)
         event.vobject_instance.vevent.summary.value = emoji + " " + event_name
         event.save()
     elif (event_name[0] == "❓"):
@@ -134,8 +147,8 @@ def process_event(event):
             # no emoji found, do nothing (already has the default emoji)
             pass
         elif emoji:
-            logger.info("Event %s, updated emoji to: %s",event_name emoji)
-            event.vobject_instance.vevent.summary.value = emoji + " " + event_name
+            logger.info("Event %s, updated emoji to: %s",event.icalendar_component.get("summary"), emoji)
+            event.vobject_instance.vevent.summary.value = emoji + " " + event_name.lstrip()
             event.save()
     else:
         logger.debug("This event already starts with an emoji, check if the word and emoji is known and/or add it to the emoji_dict")
