@@ -113,22 +113,18 @@ def words_to_emoji(words):
     return "❓"
 
 def process_event(event):
+    """Process a single calendar event."""
     event_name = event.icalendar_component.get("summary")
     logger.debug("##Event: %s", event_name)
     if event_name[0].isalpha(): #the event name starts with a letter
         logger.debug("This event does not start with an emoji, let's add that")
-
-        assert len(event.wire_data) >= len(event.data)
         summary_parts = event_name.split(" ")
         logger.debug("Words: %s", summary_parts)
         emoji = words_to_emoji(summary_parts)
-
         event.vobject_instance.vevent.summary.value = emoji + " " + event_name
-
         event.save()
     elif (event_name[0] == "❓"):
         # The event name starts with the default emoji, we can still try and add a emoji to this word
-        
         event_name = event_name[1:]  # Remove the first character (default emoji) from the event name
         summary_parts = event_name.split(" ")
         emoji = words_to_emoji(summary_parts)
@@ -146,19 +142,12 @@ def process_event(event):
         logger.debug("This event already starts with an emoji, check if the word and emoji is known and/or add it to the emoji_dict")
         if(event_name[1] == " "):
             # If the event name starts with an emoji followed by a space, split the string on spaces
-            # into emoji and word
-            
-            summary_parts = event_name.split(" ")
-            
+            summary_parts = event_name.split(" ")            
             emoji = summary_parts.pop(0) # pop the first character which is the emoticon
             words = summary_parts #the rest of the string are the words
             logger.debug("splitting with spaces. Emoji: %s Words: %s", emoji, words)
         else:
             # If the event name starts with an emoji followed by a word, split the string
-            # into emoji and word
-            # This is a workaround for the case where the emoji is not followed by a space
-            # but by a letter or number
-            # For example: "🚀Launch" instead of "🚀 Launch"
             summary_parts = event_name.split(" ")
             emoji = summary_parts[0][0]  # Get the first character (emoji) from the first item
             summary_parts[0] = summary_parts[0][1:]  # Remove the first character (emoji) from the string
