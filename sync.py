@@ -106,6 +106,7 @@ def words_to_emoji(words):
     If the word is not in the emoji_dict, add it with a default emoji.
     this function will always return a emoji, even if it is the default one.
     """
+    words = [word.upper() for word in words]
     found = False
     for word in words:
         # check each word
