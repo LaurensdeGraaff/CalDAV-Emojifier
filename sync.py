@@ -53,6 +53,7 @@ def add_words_to_emoji_dict(words, emoji="❓"):
     first_word=words[0]
     found = False
     for word in words:
+        word = ''.join(char for char in word if char.isalnum() or char.isspace() or char in "!@#$%^&*()-_=+[]{}|;:'\",.<>?/\\")
         if not word:
             logger.debug("Skipping empty word")
             continue #go to the next word
