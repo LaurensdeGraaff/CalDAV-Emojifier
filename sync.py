@@ -60,7 +60,8 @@ def add_words_to_emoji_dict(words, emoji="❓"):
                 logger.debug("first word is empty, setting it to '%s'", word)
                 first_word=word #the first word is the one we want to add
         
-        if word in emoji_dict:            
+        if word in emoji_dict:   
+            found=True         
             if (emoji_dict[word] != emoji):
                 # word does exist in emoji_dict but with a different emoji
                 if (emoji == "❓"):
@@ -77,19 +78,16 @@ def add_words_to_emoji_dict(words, emoji="❓"):
             else:
                 logger.debug("'%s' already exists in emoji_dict with the same emoji '%s'.", word, emoji)
                 # No changes needed, just log it
-            found=True
+            
             return found #if one word is found, we can stop checking the rest of the words
         else:
             # word does not exist in emoji_dict, we can add it
             logger.debug("'%s' does not exist in emoji_dict, adding it with emoji '%s'.", word, emoji)
-            found=True
+            found=False
             update_or_add_word_to_emoji_dict(word, emoji)
+            return found #we added one word, we can stop checking the rest of the words
             
 
-    if not found:
-        update_or_add_word_to_emoji_dict(first_word, emoji)
-
-    return found
 
 def words_to_emoji(words):
     """
