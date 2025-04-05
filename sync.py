@@ -33,51 +33,61 @@ def print_calendars(calendars):
     else:
         logger.debug("Your principal has no calendars")
 
-def update_emoji_dict(word,emoji):
+def update_or_add_word_to_emoji_dict(word,emoji):
     """
     Update the emoji_dict with a new word and emoji.
     If the word already exists in the emoji_dict, no changes are made.
     """
     emoji_dict[word] = emoji
+    logger.debug("Adding '%s' to emoji_dict with emoji '%s'.", word, emoji)
     with open("config/emoji_dict.json", "w", encoding="utf-8") as emoji_file:
         json.dump(emoji_dict, emoji_file, indent=4, ensure_ascii=False)
     return True
+
 def add_words_to_emoji_dict(words, emoji="❓"):
     """
-    Add a word or list of words to the emoji_dict with the given emoji.
+    Add a word to the emoji_dict with the given emoji.
     If the word already exists in the emoji_dict, no changes are made.
+    It returns True if a word was found, False if it is a new word.
     """
     first_word=words[0]
     found = False
     for word in words:
-        if word == "":
+        if not word:
             logger.debug("Skipping empty word")
-            pass
+            continue #go to the next word
         elif first_word=="":
                 logger.debug("first word is empty, setting it to '%s'", word)
                 first_word=word #the first word is the one we want to add
-        elif word in emoji_dict:
-            
+        
+        if word in emoji_dict:            
             if (emoji_dict[word] != emoji):
+                # word does exist in emoji_dict but with a different emoji
                 if (emoji == "❓"):
+                    # We don't change back to the default emoji
                     logger.debug("Trying to update '%s' emoji to default. Current emoji is '%s'. doing nothing", word, emoji_dict[word])
-                if (emoji_dict[word] == "❓"):
-                    # If the emoji is not set, update it
-                    logger.debug("'%s' already exists in emoji_dict with default. Updating to '%s'.", word, emoji)
-                    update_emoji_dict(word, emoji)
+                # if (emoji_dict[word] == "❓"):
+                #     # The emoji is not set in the emoji_dict, we can set it to the new emoji
+                #     logger.debug("'%s' already exists in emoji_dict with default. Updating to '%s'.", word, emoji)
+                #     update_or_add_word_to_emoji_dict(word, emoji)
                 else:
+                    # The emoji is set in the emoji_dict, but now we have a new one. Update it to the new emoji
                     logger.debug("'%s' already exists in emoji_dict with emoji '%s', updating to '%s'.", word, emoji_dict[word], emoji)
-                update_emoji_dict(word, emoji)
+                    update_or_add_word_to_emoji_dict(word, emoji)
             else:
                 logger.debug("'%s' already exists in emoji_dict with the same emoji '%s'.", word, emoji)
                 # No changes needed, just log it
             found=True
-            break #if one word is found, we can stop checking the rest of the words
+            return found #if one word is found, we can stop checking the rest of the words
+        else:
+            # word does not exist in emoji_dict, we can add it
+            logger.debug("'%s' does not exist in emoji_dict, adding it with emoji '%s'.", word, emoji)
+            found=True
+            update_or_add_word_to_emoji_dict(word, emoji)
             
 
     if not found:
-        logger.debug("Adding '%s' to emoji_dict with emoji '%s'.", first_word, emoji)
-        update_emoji_dict(first_word, emoji)
+        update_or_add_word_to_emoji_dict(first_word, emoji)
 
     return found
 
@@ -85,6 +95,7 @@ def words_to_emoji(words):
     """
     Convert a word to an emoji using the emoji_dict.
     If the word is not in the emoji_dict, add it with a default emoji.
+    this function will always return a emoji, even if it is the default one.
     """
     found = False
     for word in words:
@@ -100,6 +111,61 @@ def words_to_emoji(words):
         add_words_to_emoji_dict(words)
 
     return "❓"
+
+def process_event(event):
+    event_name = event.icalendar_component.get("summary")
+    logger.debug("##Event: %s", event_name)
+    if event_name[0].isalpha(): #the event name starts with a letter
+        logger.debug("This event does not start with an emoji, let's add that")
+
+        assert len(event.wire_data) >= len(event.data)
+        summary_parts = event_name.split(" ")
+        logger.debug("Words: %s", summary_parts)
+        emoji = words_to_emoji(summary_parts)
+
+        event.vobject_instance.vevent.summary.value = emoji + " " + event_name
+
+        event.save()
+    elif (event_name[0] == "❓"):
+        # The event name starts with the default emoji, we can still try and add a emoji to this word
+        
+        event_name = event_name[1:]  # Remove the first character (default emoji) from the event name
+        summary_parts = event_name.split(" ")
+        emoji = words_to_emoji(summary_parts)
+        logger.debug("This event starts with the default emoji, the emoji available is: %s", emoji)
+        if not emoji:
+            # no emoji found, do nothing (already has the default emoji)
+            pass
+        elif emoji == "❓":
+            # no emoji found, do nothing (already has the default emoji)
+            pass
+        elif emoji:
+            event.vobject_instance.vevent.summary.value = emoji + " " + event_name
+            event.save()
+    else:
+        logger.debug("This event already starts with an emoji, check if the word and emoji is known and/or add it to the emoji_dict")
+        if(event_name[1] == " "):
+            # If the event name starts with an emoji followed by a space, split the string on spaces
+            # into emoji and word
+            
+            summary_parts = event_name.split(" ")
+            
+            emoji = summary_parts.pop(0) # pop the first character which is the emoticon
+            words = summary_parts #the rest of the string are the words
+            logger.debug("splitting with spaces. Emoji: %s Words: %s", emoji, words)
+        else:
+            # If the event name starts with an emoji followed by a word, split the string
+            # into emoji and word
+            # This is a workaround for the case where the emoji is not followed by a space
+            # but by a letter or number
+            # For example: "🚀Launch" instead of "🚀 Launch"
+            summary_parts = event_name.split(" ")
+            emoji = summary_parts[0][0]  # Get the first character (emoji) from the first item
+            summary_parts[0] = summary_parts[0][1:]  # Remove the first character (emoji) from the string
+            words = summary_parts 
+            logger.debug("splitting no space. Emoji: %s Words: %s", emoji, words)
+        add_words_to_emoji_dict(words, emoji)
+    logger.debug("")
 
 
 if __name__ == "__main__":
@@ -123,58 +189,6 @@ if __name__ == "__main__":
         )
         logger.info("Found %i events", len(events))
         for event in events:
-            event_name = event.icalendar_component.get("summary")
-            logger.debug("##Event: %s", event_name)
-            if event_name[0].isalpha(): #the event name starts with a letter
-                logger.debug("This event does not start with an emoji, let's add that")
-
-                assert len(event.wire_data) >= len(event.data)
-                summary_parts = event_name.split(" ")
-                logger.debug("Words: %s", summary_parts)
-                emoji = words_to_emoji(summary_parts)
-
-                event.vobject_instance.vevent.summary.value = emoji + " " + event_name
-
-                event.save()
-            elif (event_name[0] == "❓"):
-                # The event name starts with the default emoji, we can still try and add a emoji to this word
-                
-                event_name = event_name[1:]  # Remove the first character (default emoji) from the event name
-                summary_parts = event_name.split(" ")
-                emoji = words_to_emoji(summary_parts)
-                logger.debug("This event starts with the default emoji, the emoji available is: %s", emoji)
-                if not emoji:
-                    # no emoji found, do nothing (already has the default emoji)
-                    pass
-                elif emoji == "❓":
-                    # no emoji found, do nothing (already has the default emoji)
-                    pass
-                elif emoji:
-                    event.vobject_instance.vevent.summary.value = emoji + " " + event_name
-                    event.save()
-            else:
-                logger.debug("This event already starts with an emoji, check if the word and emoji is known and/or add it to the emoji_dict")
-                if(event_name[1] == " "):
-                    # If the event name starts with an emoji followed by a space, split the string on spaces
-                    # into emoji and word
-                    
-                    summary_parts = event_name.split(" ")
-                    
-                    emoji = summary_parts.pop(0) # pop the first character which is the emoticon
-                    words = summary_parts #the rest of the string are the words
-                    logger.debug("splitting with spaces. Emoji: %s Words: %s", emoji, words)
-                else:
-                    # If the event name starts with an emoji followed by a word, split the string
-                    # into emoji and word
-                    # This is a workaround for the case where the emoji is not followed by a space
-                    # but by a letter or number
-                    # For example: "🚀Launch" instead of "🚀 Launch"
-                    summary_parts = event_name.split(" ")
-                    emoji = summary_parts[0][0]  # Get the first character (emoji) from the first item
-                    summary_parts[0] = summary_parts[0][1:]  # Remove the first character (emoji) from the string
-                    words = summary_parts 
-                    logger.debug("splitting no space. Emoji: %s Words: %s", emoji, words)
-                add_words_to_emoji_dict(words, emoji)
-            logger.debug("")
+            process_event(event)
 
         logger.debug("End of script")
