@@ -99,7 +99,7 @@ def words_to_emoji(words):
         logger.debug("Adding '%s' to emoji_dict with default emoji.", words)
         add_words_to_emoji_dict(words)
 
-    return found
+    return "❓"
 
 
 if __name__ == "__main__":
