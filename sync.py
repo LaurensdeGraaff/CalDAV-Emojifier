@@ -198,7 +198,6 @@ if __name__ == "__main__":
     ) as client:
         my_principal = client.principal()
         calendars = my_principal.calendars()
-        # print_calendars(calendars)
         for calendar_to_sync in calendars_to_sync:
             current_calendar = my_principal.calendar(name=calendar_to_sync)
             logger.info("Working with calendar: %s", current_calendar.name)
