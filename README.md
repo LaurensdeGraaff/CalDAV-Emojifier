@@ -55,6 +55,7 @@ docker run -e CALDAV_URL="https://your-caldav-server.com" \
 - `CALDAV_USERNAME`: Your CalDAV username.
 - `CALDAV_PASSWORD`: Your CalDAV password.
 - `CALDAV_CALENDARS`: A comma-separated list of calendar names to sync.
+- `SYNC_INTERVAL`: Optional. The interval in seconds between sync operations. Defaults to `3600` seconds (1 hour) if not specified.
 - `LOG_LEVEL`: Optional. Sets the logging level (e.g., `DEBUG`, `INFO`, `WARNING`, `ERROR`).
 
 This setup allows you to sync multiple calendars by specifying their names in the `CALDAV_CALENDARS` variable.
