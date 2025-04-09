@@ -8,7 +8,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the source code and configuration files
-COPY src/ ./src/
+# COPY src/ ./src/
 COPY config/ ./config/
 COPY entrypoint.sh .
 
