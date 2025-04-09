@@ -1,4 +1,3 @@
-
 {
     "image": "mcr.microsoft.com/devcontainers/python:3.12",
     "postCreateCommand": "sh .devcontainer/devcontainer_setup.sh",
@@ -12,5 +11,6 @@
                 "terminal.integrated.copyOnSelection": true
             }
         }
-    }
+    },
+    "envFile": ".devcontainer.env" // Reference the .env file here
 }

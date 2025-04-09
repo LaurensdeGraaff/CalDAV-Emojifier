@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 import sys
 import json
 import logging
@@ -14,14 +16,13 @@ import caldav
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-with open("config/config.json", "r") as config_file:
-    config = json.load(config_file)
-with open("config/emoji_dict.json", "r") as emoji_file:
-    emoji_dict = json.load(emoji_file)
 
-caldav_url = config["caldav_url"]
-username = config["username"]
-password = config["password"]
+# Load environment variables from .devcontainer.env
+load_dotenv(dotenv_path=".devcontainer/.devcontainer.env")
+
+caldav_url = os.getenv("CALDAV_URL")
+username = os.getenv('USERNAME', 'empty')
+password = os.getenv("PASSWORD")
 headers = {"X-MY-CUSTOMER-HEADER": "123"}
 calendar_to_sync = config["calendar_to_sync"]
 
