@@ -186,7 +186,42 @@ def process_event(event):
             words = summary_parts 
             logger.debug("splitting no space. Emoji: %s Words: %s", emoji, words)
         add_words_to_emoji_dict(words, emoji)
-    logger.debug("/////////next event/////////")
+
+def process_task(task):
+    """Process a single task."""
+    task_name = task.icalendar_component.get("summary")
+    logger.debug("##Task: %s", task_name)
+    if not is_emoji(task_name[0]):
+        logger.debug("This task does not start with an emoji, let's add that")
+        emoji = words_to_emoji(task_name.split(" "))
+        logger.info("Task %s, updated emoji to: %s", task_name, emoji)
+        task.vobject_instance.vtodo.summary.value = emoji + " " + task_name    
+        task.save()
+    elif task_name[0] == "❓":
+        # The task name starts with the default emoji, we can still try and add an emoji to this word
+        task_name = task_name[1:]  # Remove the first character (default emoji) from the task name
+        summary_parts = task_name.split(" ")
+        emoji = words_to_emoji(summary_parts)
+        if emoji and emoji != "❓":
+            logger.info("Task %s, updated emoji to: %s", task_name, emoji)
+            task.vobject_instance.vtodo.summary.value = emoji + " " + task_name.lstrip()
+            task.save()
+    else:
+        logger.debug("This task already starts with an emoji, check if the word and emoji is known and/or add it to the emoji_dict")
+        if task_name[1] == " ":
+            # If the task name starts with an emoji followed by a space, split the string on spaces
+            summary_parts = task_name.split(" ")
+            emoji = summary_parts.pop(0)  # Pop the first character which is the emoji
+            words = summary_parts  # The rest of the string are the words
+            logger.debug("Splitting with spaces. Emoji: %s Words: %s", emoji, words)
+        else:
+            # If the task name starts with an emoji followed by a word, split the string
+            summary_parts = task_name.split(" ")
+            emoji = summary_parts[0][0]  # Get the first character (emoji) from the first item
+            summary_parts[0] = summary_parts[0][1:]  # Remove the first character (emoji) from the string
+            words = summary_parts
+            logger.debug("Splitting no space. Emoji: %s Words: %s", emoji, words)
+        add_words_to_emoji_dict(words, emoji)
 
 
 if __name__ == "__main__":
@@ -196,19 +231,29 @@ if __name__ == "__main__":
         password=password,
         headers=headers,
     ) as client:
+        logger.info("connecting")
         my_principal = client.principal()
         calendars = my_principal.calendars()
         for calendar_to_sync in calendars_to_sync:
             current_calendar = my_principal.calendar(name=calendar_to_sync)
-            logger.info("Working with calendar: %s", current_calendar.name)
             events = current_calendar.search(
                 start=datetime.now(),
                 end=datetime(date.today().year + 1, 1, 1),
                 event=True,
                 expand=False,
             )
-            logger.info("Found %i events", len(events))
+            tasks = current_calendar.search(
+                start=datetime.now(),
+                end=datetime(date.today().year + 1, 1, 1),
+                todo=True,
+                expand=False,
+            )
+            logger.info("Found %i events and %i tasks in calendar '%s'", len(events), len(tasks), calendar_to_sync)
             for event in events:
                 process_event(event)
+                logger.debug("/////////next event/////////")
+            for task in tasks:
+                process_task(task)
+                logger.debug("/////////next task/////////")
 
         logger.info("sync done")

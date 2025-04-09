@@ -7,7 +7,6 @@ I like adding emojis to my calendar events and tasks to make them easy to spot. 
 !!!This is a work in progress!!! 
 - The python script runs, is not fully tested
 - Not tested in a docker environmet
-- It currently only syncs events from calendar, not tasks
 
 ## Features
 
