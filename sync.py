@@ -23,8 +23,20 @@ load_dotenv(dotenv_path=".devcontainer/.devcontainer.env")
 caldav_url = os.getenv("CALDAV_URL")
 username = os.getenv('USERNAME', 'empty')
 password = os.getenv("PASSWORD")
+calendars_to_sync = os.getenv("CALENDARS_TO_SYNC", "").split(",")
 headers = {"X-MY-CUSTOMER-HEADER": "123"}
-calendar_to_sync = config["calendar_to_sync"]
+
+# Check if emoji_dict.json exists, create it if it doesn't
+emoji_dict_path = "config/emoji_dict.json"
+if not os.path.exists(emoji_dict_path):
+    logger.info("Emoji dictionary not found. Creating an empty emoji_dict.json.")
+    os.makedirs(os.path.dirname(emoji_dict_path), exist_ok=True)
+    with open(emoji_dict_path, "w", encoding="utf-8") as emoji_file:
+        json.dump({}, emoji_file, indent=4, ensure_ascii=False)
+
+# Load emoji dictionary
+with open(emoji_dict_path, "r", encoding="utf-8") as emoji_file:
+    emoji_dict = json.load(emoji_file)
 
 def is_emoji(character):
     """
@@ -181,17 +193,17 @@ if __name__ == "__main__":
         my_principal = client.principal()
         calendars = my_principal.calendars()
         # print_calendars(calendars)
-
-        dev_calendar = my_principal.calendar(name=calendar_to_sync)
-        logger.info("Working with calendar: %s", dev_calendar.name)
-        events = dev_calendar.search(
-            start=datetime.now(),
-            end=datetime(date.today().year + 1, 1, 1),
-            event=True,
-            expand=False,
-        )
-        logger.info("Found %i events", len(events))
-        for event in events:
-            process_event(event)
+        for calendar_to_sync in calendars_to_sync:
+            current_calendar = my_principal.calendar(name=calendar_to_sync)
+            logger.info("Working with calendar: %s", current_calendar.name)
+            events = current_calendar.search(
+                start=datetime.now(),
+                end=datetime(date.today().year + 1, 1, 1),
+                event=True,
+                expand=False,
+            )
+            logger.info("Found %i events", len(events))
+            for event in events:
+                process_event(event)
 
         logger.info("sync done")
