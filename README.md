@@ -55,6 +55,7 @@ docker run -e CALDAV_URL="https://your-caldav-server.com" \
 - `CALDAV_USERNAME`: Your CalDAV username.
 - `CALDAV_PASSWORD`: Your CalDAV password.
 - `CALDAV_CALENDARS`: A comma-separated list of calendar names to sync.
+- `LOG_LEVEL`: Optional. Sets the logging level (e.g., `DEBUG`, `INFO`, `WARNING`, `ERROR`).
 
 This setup allows you to sync multiple calendars by specifying their names in the `CALDAV_CALENDARS` variable.
 
@@ -79,5 +80,3 @@ This code only changes an existing emoji in the CalDAV source if it is a '❓' e
 ## Contributing
 
 Feel free to submit issues or pull requests to improve the project.
-
-

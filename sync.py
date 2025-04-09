@@ -12,19 +12,21 @@ sys.path.insert(0, ".")
 
 import caldav
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
-
-
 # Load environment variables from .devcontainer.env
 load_dotenv(dotenv_path=".devcontainer/.devcontainer.env")
-
+# get arguments
 caldav_url = os.getenv("CALDAV_URL")
-username = os.getenv('USERNAME', 'empty')
+username = os.getenv('USERNAME')
 password = os.getenv("PASSWORD")
 calendars_to_sync = os.getenv("CALENDARS_TO_SYNC", "").split(",")
 headers = {"X-MY-CUSTOMER-HEADER": "123"}
+log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+# Configure logging
+logging.basicConfig(level=getattr(logging, log_level, logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+
+
 
 # Check if emoji_dict.json exists, create it if it doesn't
 emoji_dict_path = "config/emoji_dict.json"
