@@ -38,6 +38,11 @@ if not os.path.exists(emoji_dict_path):
 with open(emoji_dict_path, "r", encoding="utf-8") as emoji_file:
     emoji_dict = json.load(emoji_file)
 
+def sanitize_word(word):
+    word = word.upper()
+    word = ''.join(char for char in word if char.isalnum() or char.isspace() or char in "!@#$%^&*()-_=+[]{}|;:'\",.<>?/\\")
+    return word
+
 def is_emoji(character):
     """
     Somewhat check if this is an emoji
@@ -73,10 +78,10 @@ def add_words_to_emoji_dict(words, emoji="❓"):
     If the word already exists in the emoji_dict, no changes are made.
     It returns True if a word was found, False if it is a new word.
     """
-    first_word=words[0]
+    first_word=sanitize_word(words[0])
     found = False
     for word in words:
-        word = ''.join(char for char in word if char.isalnum() or char.isspace() or char in "!@#$%^&*()-_=+[]{}|;:'\",.<>?/\\")
+        word = sanitize_word(word)
         if not word:
             logger.debug("Skipping empty word")
             continue #go to the next word
@@ -119,9 +124,9 @@ def words_to_emoji(words):
     If the word is not in the emoji_dict, add it with a default emoji.
     this function will always return a emoji, even if it is the default one.
     """
-    words = [word.upper() for word in words]
     found = False
     for word in words:
+        word = sanitize_word(word)
         # check each word
         if word in emoji_dict:
             logger.debug("Found '%s' in emoji_dict with emoji '%s'.", word, emoji_dict[word])
@@ -150,6 +155,7 @@ def process_event(event):
         event.vobject_instance.vevent.summary.value = emoji + " " + event_name
         event.save()
     elif (event_name[0] == "❓"):
+        logger.debug("Event '%s' starts with the default emoji '%s'.", event_name, event_name[0])
         # The event name starts with the default emoji, we can still try and add a emoji to this word
         event_name = event_name[1:]  # Remove the first character (default emoji) from the event name
         summary_parts = event_name.split(" ")
@@ -180,7 +186,7 @@ def process_event(event):
             words = summary_parts 
             logger.debug("splitting no space. Emoji: %s Words: %s", emoji, words)
         add_words_to_emoji_dict(words, emoji)
-    logger.debug("")
+    logger.debug("/////////next event/////////")
 
 
 if __name__ == "__main__":
