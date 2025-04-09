@@ -8,7 +8,6 @@ I like adding emojis to my calendar events and tasks to make them easy to spot. 
 - The python script runs, is not fully tested
 - Not tested in a docker environmet
 - It currently only syncs events from calendar, not tasks
-- It can only do one calendar, not multiple
 
 ## Features
 
@@ -29,7 +28,6 @@ I like adding emojis to my calendar events and tasks to make them easy to spot. 
 ```
 emoji-calldav/
 ├── config/
-│   ├── config.json        # Configuration file for CalDAV credentials
 │   ├── emoji_dict.json    # Emoji dictionary for mapping words to emojis
 ├── sync.py                # Main script for syncing events
 ├── Dockerfile             # Docker configuration
@@ -40,17 +38,26 @@ emoji-calldav/
 
 ## Configuration
 
-### `config/config.json`
+### Docker Arguments for Configuration
 
-This file contains the CalDAV server configuration. Example:
+Example Docker run command:
 
-```json
-{
-    "caldav_url": "https://your-caldav-server.com",
-    "username": "your-username",
-    "password": "your-password"
-}
+```bash
+docker run -e CALDAV_URL="https://your-caldav-server.com" \
+           -e CALDAV_USERNAME="your-username" \
+           -e CALDAV_PASSWORD="your-password" \
+           -e CALDAV_CALENDARS="calendar1,calendar2,calendar3" \
+           emoji-caldav-sync
 ```
+
+### Environment Variables
+
+- `CALDAV_URL`: The URL of your CalDAV server.
+- `CALDAV_USERNAME`: Your CalDAV username.
+- `CALDAV_PASSWORD`: Your CalDAV password.
+- `CALDAV_CALENDARS`: A comma-separated list of calendar names to sync.
+
+This setup allows you to sync multiple calendars by specifying their names in the `CALDAV_CALENDARS` variable.
 
 ### `config/emoji_dict.json`
 
@@ -63,6 +70,11 @@ This file maps words to emojis. Example:
     "holiday": "🏖️"
 }
 ```
+
+If this file doesn't exist, the code will create an empty dictionary for you.  
+The emojis from the CalDAV source take precedence.  
+If an existing word with a different emoji is loaded from the source, the dictionary is updated.  
+This code only changes an existing emoji in the CalDAV source if it is a '❓' emoji.
 
 
 ## Contributing
