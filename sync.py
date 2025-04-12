@@ -14,16 +14,33 @@ import caldav
 
 # Load environment variables from .devcontainer.env
 load_dotenv(dotenv_path=".devcontainer/.devcontainer.env")
-# get arguments
-caldav_url = os.getenv("CALDAV_URL")
-username = os.getenv('USERNAME')
-password = os.getenv("PASSWORD")
-calendars_to_sync = os.getenv("CALENDARS_TO_SYNC", "").split(",")
-headers = {"X-MY-CUSTOMER-HEADER": "123"}
 log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
 # Configure logging
 logging.basicConfig(level=getattr(logging, log_level, logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+# get arguments
+# Load configuration from config.json
+config_path = "./config/config.json"
+if not os.path.exists(config_path):
+    logger.error("Configuration file not found at '%s'. Please create a config.json file.", config_path)
+    sys.exit(1)
+
+with open(config_path, "r", encoding="utf-8") as config_file:
+    config = json.load(config_file)
+
+caldav_url = config.get("CALDAV_URL")
+username = config.get("USERNAME")
+password = config.get("PASSWORD")
+calendars_to_sync = config.get("CALENDARS_TO_SYNC", [])
+if not isinstance(calendars_to_sync, list):
+    logger.error("Expected 'CALENDARS_TO_SYNC' to be a list in config.json.")
+    sys.exit(1)
+
+if not caldav_url or not username or not password:   
+    logger.error("Missing required configuration values in config.json.")
+    sys.exit(1)
+headers = {"X-MY-CUSTOMER-HEADER": "123"}
 
 
 
