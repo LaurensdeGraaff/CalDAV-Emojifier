@@ -5,20 +5,17 @@ I like adding emojis to my calendar events and tasks to make them easy to spot. 
 ## Status
 
 !!!This is a work in progress!!! 
-- The python script runs, is not fully tested
-- Not tested in a docker environmet
 
 ## Features
 
 - Connects to a CalDAV server using credentials from `config.json`.
 - Ensures events start with an emoji.
-- Ensures tasks start with an emoji (work in progress).
+- Ensures tasks start with an emoji 
 - Automatically updates the emoji dictionary (`emoji_dict.json`) with new words and emojis.
 - Runs periodically using Docker.
 
 ## Prerequisites
 
-- Python 3 and `pip3` (already included in the dev container).
 - A CalDAV server with valid credentials.
 - Docker (for running the script periodically).
 
@@ -28,6 +25,7 @@ I like adding emojis to my calendar events and tasks to make them easy to spot. 
 emoji-calldav/
 ├── config/
 │   ├── emoji_dict.json    # Emoji dictionary for mapping words to emojis
+│   ├── config.json        # Caldav configuration
 ├── sync.py                # Main script for syncing events
 ├── Dockerfile             # Docker configuration
 ├── entrypoint.sh          # Script to run the Python script periodically
@@ -37,24 +35,34 @@ emoji-calldav/
 
 ## Configuration
 
+### `config/config.json`
+
+This file is the configuration for the syncing.
+So your account details and calendars to sync. Example:
+```json
+{
+    "CALDAV_URL": "https://example.com/remote.php/dav/calendars/username/",
+    "USERNAME": "your_username@example.com",
+    "PASSWORD": "your_secure_password",
+    "CALENDARS_TO_SYNC": ["calendar1", "calendar2"]
+}
+
+```
+
 ### Docker Arguments for Configuration
 
 Example Docker run command:
 
 ```bash
-docker run -e CALDAV_URL="https://your-caldav-server.com" \
-           -e CALDAV_USERNAME="your-username" \
-           -e CALDAV_PASSWORD="your-password" \
-           -e CALDAV_CALENDARS="calendar1,calendar2,calendar3" \
-           emoji-caldav-sync
+docker run caldavemojifier
+```
+Or with a cumstom SYNC_INTERVAL and or LOG_LEVEL
+```bash
+docker run -e SYNC_INTERVAL=60 -e LOG_LEVEL=DEBUG caldavemojifier
 ```
 
 ### Environment Variables
 
-- `CALDAV_URL`: The URL of your CalDAV server.
-- `CALDAV_USERNAME`: Your CalDAV username.
-- `CALDAV_PASSWORD`: Your CalDAV password.
-- `CALDAV_CALENDARS`: A comma-separated list of calendar names to sync.
 - `SYNC_INTERVAL`: Optional. The interval in seconds between sync operations. Defaults to `3600` seconds (1 hour) if not specified.
 - `LOG_LEVEL`: Optional. Sets the logging level (e.g., `DEBUG`, `INFO`, `WARNING`, `ERROR`).
 
