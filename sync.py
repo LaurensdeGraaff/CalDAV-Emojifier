@@ -58,9 +58,9 @@ with open(emoji_dict_path, "r", encoding="utf-8") as emoji_file:
     emoji_dict = json.load(emoji_file)
 
 def sanitize_word(word):
-    word = word.upper()
-    word = ''.join(char for char in word if char.isalnum() or char.isspace() or char in "!@#$%^&*()-_=+[]{}|;:'\",.<>?/\\")
-    return word
+    word = ''.join(char for char in word if char.isalpha())
+    #word = ''.join(char for char in word if char.isalnum() or char.isspace() or char in "!@#$%^&*()-_=+[]{}|;:'\",.<>?/\\")
+    return word.upper()
 
 def is_emoji(character):
     """
@@ -128,12 +128,12 @@ def add_words_to_emoji_dict(words, emoji="❓"):
                 # No changes needed, just log it
             
             return found #if one word is found, we can stop checking the rest of the words
-        else:
-            # word does not exist in emoji_dict, we can add it
-            logger.debug("'%s' does not exist in emoji_dict, adding it with emoji '%s'.", word, emoji)
-            found=False
-            update_or_add_word_to_emoji_dict(word, emoji)
-            return found #we added one word, we can stop checking the rest of the words
+    #end of for word in words loop
+
+    # If none of the words are found, add the first word
+    if not found and first_word:
+        logger.debug("None of the words exist in emoji_dict. Adding first word '%s' with emoji '%s'.", first_word, emoji)
+        update_or_add_word_to_emoji_dict(first_word, emoji)
             
 
 
