@@ -10,18 +10,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the source code and configuration files
 # COPY src/ ./src/
 COPY config/ ./config/
-COPY entrypoint.sh ./entrypoint.sh
+COPY sync.py ./sync.py
+COPY entrypoint.sh /app/entrypoint.sh
 
 # Make the entrypoint script executable
-RUN chmod +x ./entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Set environment variables for configuration
 
-ARG SYNC_INTERVAL
 ARG LOG_LEVEL
 
-ENV SYNC_INTERVAL=$SYNC_INTERVAL
+ENV SYNC_INTERVAL=3600
 ENV LOG_LEVEL=$LOG_LEVEL
 
 # Set the entrypoint to the script
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
