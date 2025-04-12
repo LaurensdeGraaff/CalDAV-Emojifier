@@ -3,8 +3,7 @@
 I love adding emojis to my calendar events and tasks to make them stand out! But doing it manually takes time. 🚀 This project syncs events from a CalDAV calendar and ensures every event starts with an emoji, adding one if needed. It uses a predefined emoji dictionary that updates automatically by matching words to emojis. If you add an emoji to an event yourself, the dictionary learns and adds it for future use. 🤖
 
 ## 🚧 Status
-
-⚠️ **This is a work in progress!** ⚠️
+⚠️ This project is functional but has not been extensively tested. Use it with caution and report any issues you encounter. ⚠️
 
 ## ✨ Features
 
