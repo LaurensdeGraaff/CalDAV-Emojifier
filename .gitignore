@@ -1,3 +1,4 @@
 config/config.json
 config/emoji_dict.json
 .devcontainer/.devcontainer.env
+tests/__pycache__/
