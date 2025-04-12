@@ -49,25 +49,6 @@ So your account details and calendars to sync. Example:
 
 ```
 
-### Docker Arguments for Configuration
-
-Example Docker run command:
-
-```bash
-docker run caldavemojifier
-```
-Or with a cumstom SYNC_INTERVAL and or LOG_LEVEL
-```bash
-docker run -e SYNC_INTERVAL=60 -e LOG_LEVEL=DEBUG caldavemojifier
-```
-
-### Environment Variables
-
-- `SYNC_INTERVAL`: Optional. The interval in seconds between sync operations. Defaults to `3600` seconds (1 hour) if not specified.
-- `LOG_LEVEL`: Optional. Sets the logging level (e.g., `DEBUG`, `INFO`, `WARNING`, `ERROR`).
-
-This setup allows you to sync multiple calendars by specifying their names in the `CALDAV_CALENDARS` variable.
-
 ### `config/emoji_dict.json`
 
 This file maps words to emojis. Example:
@@ -85,6 +66,24 @@ The emojis from the CalDAV source take precedence.
 If an existing word with a different emoji is loaded from the source, the dictionary is updated.  
 This code only changes an existing emoji in the CalDAV source if it is a '❓' emoji.
 
+### Docker Arguments for Configuration
+
+Example Docker run command:
+
+```bash
+docker run caldav-emojifier
+```
+Or with a cumstom SYNC_INTERVAL and or LOG_LEVEL
+```bash
+docker run -e SYNC_INTERVAL=60 -e LOG_LEVEL=DEBUG caldavemojifier
+```
+
+### Environment Variables
+
+- `SYNC_INTERVAL`: Optional. The interval in seconds between sync operations. Defaults to `3600` seconds (1 hour) if not specified.
+- `LOG_LEVEL`: Optional. Sets the logging level (e.g., `DEBUG`, `INFO`, `WARNING`, `ERROR`).
+
+This setup allows you to sync multiple calendars by specifying their names in the `CALDAV_CALENDARS` variable.
 
 ## Contributing
 
