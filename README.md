@@ -69,7 +69,7 @@ This file maps words to emojis. Example:
 Example Docker run command:
 
 ```bash
-docker run caldav-emojifier
+docker run withoutanickname/caldav-emojifier
 ```
 
 Or with a custom `SYNC_INTERVAL` and/or `LOG_LEVEL`:
@@ -82,6 +82,10 @@ docker run -e SYNC_INTERVAL=60 -e LOG_LEVEL=DEBUG caldavemojifier
 
 - `SYNC_INTERVAL`: ⏱️ Optional. The interval in seconds between sync operations. Defaults to `3600` seconds (1 hour) if not specified.
 - `LOG_LEVEL`: 🛠️ Optional. Sets the logging level (e.g., `DEBUG`, `INFO`, `WARNING`, `ERROR`).
+- `MASTER_ON_COLLISION`: ⚖️ Optional. Determines which source takes precedence when there is a conflict between the emoji in the CalDAV event and the emoji in the emoji dictionary.  
+    - If set to `CALDAV`, the emoji from the CalDAV event will overwrite the dictionary.  
+    - If set to `EMOJI_DICT`, the emoji from the dictionary will overwrite the CalDAV event.  
+    - Defaults to `CALDAV` if not specified.
 
 This setup allows you to sync multiple calendars by specifying their names in the `CALDAV_CALENDARS` variable. 📅
 
