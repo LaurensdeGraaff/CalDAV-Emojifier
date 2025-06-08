@@ -1,3 +1,4 @@
 jsonschema
 caldav
 python-dotenv
+setuptools>=70.0
