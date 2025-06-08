@@ -16,10 +16,12 @@ import caldav
 load_dotenv(dotenv_path=".devcontainer/.devcontainer.env")
 log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
 master_on_collision = os.getenv('MASTER_ON_COLLISION', 'CALDAV').upper()
+sync_interval = os.getenv('SYNC_INTERVAL', '3600')  
 
 # Configure logging
 logging.basicConfig(level=getattr(logging, log_level, logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+logger.info("LOG_LEVEL: %s, SYNC_INTERVAL: %s, MASTER_ON_COLLISION: %s", log_level, sync_interval, master_on_collision)
 
 # get arguments
 # Load configuration from config.json
@@ -30,7 +32,7 @@ if not os.path.exists(config_path):
 
 with open(config_path, "r", encoding="utf-8") as config_file:
     config = json.load(config_file)
-logger.debug("master_on_collision: %s", master_on_collision) #todo: remove this line
+
 caldav_url = config.get("CALDAV_URL")
 username = config.get("USERNAME")
 password = config.get("PASSWORD")
