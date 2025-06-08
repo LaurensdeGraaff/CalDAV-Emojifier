@@ -61,9 +61,9 @@ This file maps words to emojis. Example:
 
 - If this file doesn't exist, the code will create an empty dictionary for you. 🆕  
 - If a event starts with an emoji, the first word from that event is matched to the emoji.
-- If a event does not start with an emoji, and it is not found in the dictionairy. The default emoji will be '❓'
+- If a event does not start with an emoji, and it is not found in the dictionary. The default emoji will be '❓'
 - If an existing word with a different emoji is loaded from the source, the dictionary is updated. 🔄  
-- The emojis from the CalDAV source take precedence on conflict with the dictionairy, unless other specified (see section `Environment Variables` ). 🥇  
+- The emojis from the CalDAV source take precedence on conflict with the dictionary, unless other specified (see section `Environment Variables` ). 🥇  
 - This code only changes an existing emoji in the CalDAV source if it is a '❓' emoji. ❓➡️🎉
 
 ### 🐳 Docker Arguments for Configuration
