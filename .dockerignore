@@ -1,4 +1,13 @@
+config/config_example.json
 config/config.json
+config/emoji_dict_example.json
 config/emoji_dict.json
 .devcontainer/
 tests/__pycache__/
+__pycache__/
+README.md
+LICENSE
+icons/
+tests/
+.vscode
+.gitignore
