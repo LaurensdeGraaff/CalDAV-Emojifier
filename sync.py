@@ -279,7 +279,18 @@ if __name__ == "__main__":
         my_principal = client.principal()
         calendars = my_principal.calendars()
         for calendar_to_sync in calendars_to_sync:
-            current_calendar = my_principal.calendar(name=calendar_to_sync)
+            try:
+                current_calendar = my_principal.calendar(name=calendar_to_sync)
+            except caldav.error.NotFoundError:
+                logger.error("Calendar with name '%s' not found. Skipping.", calendar_to_sync)
+                logger.info("Available calendars:")
+                for c in calendars:
+                    logger.info("    Name: %-36s ", getattr(c, 'name', 'Unknown'))
+                continue
+            except Exception as e:
+                logger.error("Error accessing calendar '%s': %s. Skipping.", calendar_to_sync, str(e))
+                continue
+
             events = current_calendar.search(
                 start=datetime.now(),
                 end=datetime(date.today().year + 1, 1, 1),
