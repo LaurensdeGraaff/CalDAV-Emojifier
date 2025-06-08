@@ -15,9 +15,13 @@ import caldav
 # Load environment variables from .devcontainer.env
 load_dotenv(dotenv_path=".devcontainer/.devcontainer.env")
 log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+master_on_collision = os.getenv('MASTER_ON_COLLISION', 'CALDAV').upper()
+sync_interval = os.getenv('SYNC_INTERVAL', '3600')  
+
 # Configure logging
 logging.basicConfig(level=getattr(logging, log_level, logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+logger.info("LOG_LEVEL: %s, SYNC_INTERVAL: %s, MASTER_ON_COLLISION: %s", log_level, sync_interval, master_on_collision)
 
 # get arguments
 # Load configuration from config.json
@@ -115,10 +119,9 @@ def add_words_to_emoji_dict(words, emoji="❓"):
                 if (emoji == "❓"):
                     # We don't change back to the default emoji
                     logger.debug("Trying to update '%s' emoji to default. Current emoji is '%s'. doing nothing", word, emoji_dict[word])
-                # if (emoji_dict[word] == "❓"):
-                #     # The emoji is not set in the emoji_dict, we can set it to the new emoji
-                #     logger.debug("'%s' already exists in emoji_dict with default. Updating to '%s'.", word, emoji)
-                #     update_or_add_word_to_emoji_dict(word, emoji)
+                elif ((master_on_collision == "EMOJI_DICT") and  (emoji_dict[word] != "❓")):
+                    # The emoji_dict is the master, so we don't change it
+                    logger.debug("%s already exists in emoji_dict with emoji %s; since emoji_dict is master, no update is performed (requested emoji: %s).", word, emoji_dict[word], emoji)
                 else:
                     # The emoji is set in the emoji_dict, but now we have a new one. Update it to the new emoji
                     logger.debug("'%s' already exists in emoji_dict with emoji '%s', updating to '%s'.", word, emoji_dict[word], emoji)
@@ -186,11 +189,11 @@ def process_event(event):
             # no emoji found, do nothing (already has the default emoji)
             pass
         elif emoji:
-            logger.info("Event %s, updated emoji to: %s",event.icalendar_component.get("summary"), emoji)
+            logger.info("Event %s, updated default emoji to: %s",event.icalendar_component.get("summary"), emoji)
             event.vobject_instance.vevent.summary.value = emoji + " " + event_name.lstrip()
             event.save()
     else:
-        logger.debug("This event already starts with an emoji, check if the word and emoji is known and/or add it to the emoji_dict")
+        logger.debug("This event already starts with an emoji, check if the word and emoji is known")
         if(event_name[1] == " "):
             # If the event name starts with an emoji followed by a space, split the string on spaces
             summary_parts = event_name.split(" ")            
@@ -204,7 +207,19 @@ def process_event(event):
             summary_parts[0] = summary_parts[0][1:]  # Remove the first character (emoji) from the string
             words = summary_parts 
             logger.debug("splitting no space. Emoji: %s Words: %s", emoji, words)
-        add_words_to_emoji_dict(words, emoji)
+        event_name = event_name[1:]  # Remove the first character (emoji) from the event name
+        current_emoji = emoji
+        emoji_from_dict = words_to_emoji(words)
+        if master_on_collision == "EMOJI_DICT" and emoji_from_dict != "❓":
+            # the emoji does not match the emoji_dict
+            # since emoji_dict is the master, we update the caldav event with the emoji_dict emoji
+            if current_emoji != emoji_from_dict:
+                logger.debug("'%s' already exists in emoji_dict with emoji '%s', emoji_dict is master, update caldav.'%s'.", words, current_emoji, emoji_from_dict)
+                logger.info("Event %s, updated emoji to: %s because emoji_dict is master",event.icalendar_component.get("summary"), emoji_from_dict)
+                event.vobject_instance.vevent.summary.value = emoji_from_dict + " " + event_name.lstrip()
+                event.save()
+        else:
+            add_words_to_emoji_dict(words, emoji)
 
 def process_task(task):
     """Process a single task."""
@@ -240,7 +255,19 @@ def process_task(task):
             summary_parts[0] = summary_parts[0][1:]  # Remove the first character (emoji) from the string
             words = summary_parts
             logger.debug("Splitting no space. Emoji: %s Words: %s", emoji, words)
-        add_words_to_emoji_dict(words, emoji)
+        task_name = task_name[1:]  # Remove the first character (emoji) from the event name
+        current_emoji = emoji
+        emoji_from_dict = words_to_emoji(words)
+        if master_on_collision == "EMOJI_DICT" and emoji_from_dict != "❓":
+            # the emoji does not match the emoji_dict
+            # since emoji_dict is the master, we update the caldav event with the emoji_dict emoji
+            if current_emoji != emoji_from_dict:
+                logger.debug("'%s' already exists in emoji_dict with emoji '%s', emoji_dict is master, update caldav.'%s'.", words, current_emoji, emoji_from_dict)
+                logger.info("Task %s, updated emoji to: %s because emoji_dict is master",task_name, emoji_from_dict)
+                task.vobject_instance.vtodo.summary.value = emoji_from_dict + " " + task_name.lstrip()
+                task.save()
+        else:
+            add_words_to_emoji_dict(words, emoji)
 
 
 if __name__ == "__main__":
@@ -254,7 +281,18 @@ if __name__ == "__main__":
         my_principal = client.principal()
         calendars = my_principal.calendars()
         for calendar_to_sync in calendars_to_sync:
-            current_calendar = my_principal.calendar(name=calendar_to_sync)
+            try:
+                current_calendar = my_principal.calendar(name=calendar_to_sync)
+            except caldav.error.NotFoundError:
+                logger.error("Calendar with name '%s' not found. Skipping.", calendar_to_sync)
+                logger.info("Available calendars:")
+                for c in calendars:
+                    logger.info("    Name: %-36s ", getattr(c, 'name', 'Unknown'))
+                continue
+            except Exception as e:
+                logger.error("Error accessing calendar '%s': %s. Skipping.", calendar_to_sync, str(e))
+                continue
+
             events = current_calendar.search(
                 start=datetime.now(),
                 end=datetime(date.today().year + 1, 1, 1),

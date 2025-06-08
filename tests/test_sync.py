@@ -6,11 +6,11 @@ from sync import sanitize_word, is_emoji, update_or_add_word_to_emoji_dict, add_
 class TestSync(unittest.TestCase):
 
     def test_sanitize_word(self):
-        self.assertEqual(sanitize_word("Hello!"), "HELLO!")
-        self.assertEqual(sanitize_word("123@#$"), "123@#$")
-        self.assertEqual(sanitize_word("Hello World!"), "HELLO WORLD!")
-        self.assertEqual(sanitize_word("🍰 the cake is a lie"), " THE CAKE IS A LIE")
-        self.assertEqual(sanitize_word("The 🍰 is a lie"), "THE  IS A LIE")
+        self.assertEqual(sanitize_word("Hello!"), "HELLO")
+        self.assertEqual(sanitize_word("123@#$"), "")
+        self.assertEqual(sanitize_word("Hello World!"), "HELLOWORLD")
+        self.assertEqual(sanitize_word("🍰 the cake is a lie"), "THECAKEISALIE")
+        self.assertEqual(sanitize_word("The 🍰 is a lie"), "THEISALIE")
         self.assertEqual(sanitize_word(""), "")
 
     def test_is_emoji(self):

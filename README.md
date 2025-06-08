@@ -60,8 +60,10 @@ This file maps words to emojis. Example:
 ```
 
 - If this file doesn't exist, the code will create an empty dictionary for you. 🆕  
-- The emojis from the CalDAV source take precedence. 🥇  
+- If a event starts with an emoji, the first word from that event is matched to the emoji.
+- If a event does not start with an emoji, and it is not found in the dictionary. The default emoji will be '❓'
 - If an existing word with a different emoji is loaded from the source, the dictionary is updated. 🔄  
+- The emojis from the CalDAV source take precedence on conflict with the dictionary, unless other specified (see section `Environment Variables` ). 🥇  
 - This code only changes an existing emoji in the CalDAV source if it is a '❓' emoji. ❓➡️🎉
 
 ### 🐳 Docker Arguments for Configuration
@@ -69,19 +71,23 @@ This file maps words to emojis. Example:
 Example Docker run command:
 
 ```bash
-docker run caldav-emojifier
+docker run withoutanickname/caldav-emojifier
 ```
 
 Or with a custom `SYNC_INTERVAL` and/or `LOG_LEVEL`:
 
 ```bash
-docker run -e SYNC_INTERVAL=60 -e LOG_LEVEL=DEBUG caldavemojifier
+docker run -e SYNC_INTERVAL=60 -e LOG_LEVEL=DEBUG withoutanickname/caldavemojifier
 ```
 
 ### 🌍 Environment Variables
 
 - `SYNC_INTERVAL`: ⏱️ Optional. The interval in seconds between sync operations. Defaults to `3600` seconds (1 hour) if not specified.
 - `LOG_LEVEL`: 🛠️ Optional. Sets the logging level (e.g., `DEBUG`, `INFO`, `WARNING`, `ERROR`).
+- `MASTER_ON_COLLISION`: ⚖️ Optional. Determines which source takes precedence when there is a conflict between the emoji in the CalDAV event and the emoji in the emoji dictionary.  
+    - If set to `CALDAV`, the emoji from the CalDAV event will overwrite the dictionary.  
+    - If set to `EMOJI_DICT`, the emoji from the dictionary will overwrite the CalDAV event.  
+    - Defaults to `CALDAV` if not specified.
 
 This setup allows you to sync multiple calendars by specifying their names in the `CALDAV_CALENDARS` variable. 📅
 
