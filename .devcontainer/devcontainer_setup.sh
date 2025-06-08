@@ -1,5 +1,5 @@
-pip install poetry
-pip install caldav
-pip install types-caldav
-pip install dotenv
-poetry config virtualenvs.in-project true
+sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get clean -y
+pip install --upgrade pip
+pip install -r requirements.txt
