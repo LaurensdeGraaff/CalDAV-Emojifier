@@ -121,7 +121,7 @@ def add_words_to_emoji_dict(words, emoji="❓"):
                     logger.debug("Trying to update '%s' emoji to default. Current emoji is '%s'. doing nothing", word, emoji_dict[word])
                 elif ((master_on_collision == "EMOJI_DICT") and  (emoji_dict[word] != "❓")):
                     # The emoji_dict is the master, so we don't change it
-                    logger.debug("'%s' already exists in emoji_dict with emoji '%s', emoji_dict is master, do nothing.'%s'.", word, emoji_dict[word], emoji)
+                    logger.debug("%s already exists in emoji_dict with emoji %s; since emoji_dict is master, no update is performed (requested emoji: %s).", word, emoji_dict[word], emoji)
                 else:
                     # The emoji is set in the emoji_dict, but now we have a new one. Update it to the new emoji
                     logger.debug("'%s' already exists in emoji_dict with emoji '%s', updating to '%s'.", word, emoji_dict[word], emoji)
