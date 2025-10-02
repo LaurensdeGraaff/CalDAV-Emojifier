@@ -97,7 +97,7 @@ def update_or_add_word_to_emoji_dict(word,emoji):
 
 def add_words_to_emoji_dict(words, emoji="❓"):
     """
-    Add a word to the emoji_dict with the given emoji.
+    Add a word to the emoji_dict, optionally with a given emoji.
     If the word already exists in the emoji_dict, no changes are made.
     It returns True if a word was found, False if it is a new word.
     """
@@ -142,12 +142,13 @@ def add_words_to_emoji_dict(words, emoji="❓"):
 
 def words_to_emoji(words):
     """
-    Convert a word to an emoji using the emoji_dict.
-    If the word is not in the emoji_dict, add it with a default emoji.
+    Convert a list of words to an emoji using the emoji_dict.
+    If none of the words is in the emoji_dict, add the first word from the list with a default emoji.
     this function will always return a emoji, even if it is the default one.
     """
     found = False
     for word in words:
+        # for each word in the wordlist
         word = sanitize_word(word)
         # check each word
         if word in emoji_dict:
@@ -155,7 +156,7 @@ def words_to_emoji(words):
             return emoji_dict[word]
             
 
-    # if no word is found, add the first word to the emoji_dict with a default emoji
+    # if no word is found, give the list to the next function to add a word with emoji
     if not found:
         logger.debug("Adding '%s' to emoji_dict with default emoji.", words)
         add_words_to_emoji_dict(words)
@@ -167,26 +168,35 @@ def process_event(event):
     
     event_name = event.icalendar_component.get("summary")
     logger.debug("##Event: %s", event_name)
-    #if event_name[0].isalpha(): #the event name starts with a letter
-    if not is_emoji(event_name[0]):
+    # We have a event, let check
+    #   Does it start with an emoji?
+    #   Yes:
+    #       1. Check if any word is already in emoji_dict
+    #           Yes: Check if the emoji matches and either ignor or update the emoji
+    #           No: Add the first word to the emoji_dict with the current emoji
+    #   No:
+    #       1. Add the first word to the emoji_dict with a default emoji
+    #       2. Update the event with the default emoji + event name
+
+    if not is_emoji(event_name[0]): # Check if the first character is an emoji
         logger.debug("This event does not start with an emoji, let's add that")
         summary_parts = event_name.split(" ")
         logger.debug("Words: %s", summary_parts)
-        emoji = words_to_emoji(summary_parts)
+        emoji = words_to_emoji(summary_parts) # we give the function a list of words, we get any emoji back
         logger.info("Event %s, updated emoji to: %s",event.icalendar_component.get("summary"), emoji)
-        event.vobject_instance.vevent.summary.value = emoji + " " + event_name
+        event.vobject_instance.vevent.summary.value = emoji + " " + event_name # update the event        
         event.save()
     elif (event_name[0] == "❓"):
         logger.debug("Event '%s' starts with the default emoji '%s'.", event_name, event_name[0])
-        # The event name starts with the default emoji, we can still try and add a emoji to this word
-        event_name = event_name[1:]  # Remove the first character (default emoji) from the event name
-        summary_parts = event_name.split(" ")
-        emoji = words_to_emoji(summary_parts)
+        # The event name starts with the default emoji, we ccan still retry and check if there is a (new) emoji available for this word list.
+        event_name = event_name[1:]                 # Remove the first character (default emoji) from the event name
+        summary_parts = event_name.split(" ")       # Split the event name into words
+        emoji = words_to_emoji(summary_parts)       # Get an emoji for the words (if available)
         if not emoji:
-            # no emoji found, do nothing (already has the default emoji)
+            # no emoji found, do nothing 
             pass
         elif emoji == "❓":
-            # no emoji found, do nothing (already has the default emoji)
+            # no new emoji found, do nothing 
             pass
         elif emoji:
             logger.info("Event %s, updated default emoji to: %s",event.icalendar_component.get("summary"), emoji)
@@ -219,7 +229,7 @@ def process_event(event):
                 event.vobject_instance.vevent.summary.value = emoji_from_dict + " " + event_name.lstrip()
                 event.save()
         else:
-            add_words_to_emoji_dict(words, emoji)
+            add_words_to_emoji_dict(words, emoji) # update the word with the emoji from the event
 
 def process_task(task):
     """Process a single task."""
