@@ -4,3 +4,4 @@ config/emoji_dict.json
 tests/__pycache__/
 __pycache__/
 .vscode
+/llm/training.ics
