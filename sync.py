@@ -98,11 +98,37 @@ def update_or_add_word_to_emoji_dict(word,emoji):
 def add_words_to_emoji_dict(words, emoji="❓"):
     """
     Add a word to the emoji_dict, optionally with a given emoji.
+    If emoji is ❓ (default), try to predict a better emoji using ML.
     If the word already exists in the emoji_dict, no changes are made.
     It returns True if a word was found, False if it is a new word.
     """
     first_word=sanitize_word(words[0])
     found = False
+    
+    # If we're being asked to add with default emoji, try to predict a better one
+    if emoji == "❓":
+        try:
+            import sys
+            import os
+            prediction_path = os.path.join(os.path.dirname(__file__), 'prediction')
+            if prediction_path not in sys.path:
+                sys.path.append(prediction_path)
+            
+            from emoji_predictor import predict_emoji_for_text
+            
+            # Convert words to text for prediction
+            text = " ".join(str(word) for word in words if word)
+            predicted_emoji = predict_emoji_for_text(text, config_path="./config")
+            
+            if predicted_emoji != "❓":
+                emoji = predicted_emoji
+                logger.info("Enhanced ML suggested '%s' instead of ❓ for words '%s'", emoji, words)
+            
+        except ImportError:
+            logger.debug("Enhanced prediction not available for new word addition")
+        except Exception as e:
+            logger.debug("Enhanced prediction failed for new word: %s", str(e))
+    
     for word in words:
         word = sanitize_word(word)
         if not word:
@@ -143,8 +169,8 @@ def add_words_to_emoji_dict(words, emoji="❓"):
 def words_to_emoji(words):
     """
     Convert a list of words to an emoji using the emoji_dict.
-    If none of the words is in the emoji_dict, add the first word from the list with a default emoji.
-    this function will always return a emoji, even if it is the default one.
+    If none of the words is in the emoji_dict, try enhanced ML prediction, 
+    then add the first word from the list with predicted or default emoji.
     """
     found = False
     for word in words:
@@ -156,12 +182,37 @@ def words_to_emoji(words):
             return emoji_dict[word]
             
 
-    # if no word is found, give the list to the next function to add a word with emoji
+    # if no word is found, try enhanced prediction before using default
     if not found:
-        logger.debug("Adding '%s' to emoji_dict with default emoji.", words)
-        add_words_to_emoji_dict(words)
+        predicted_emoji = "❓"  # default fallback
+        
+        # Try to use ML prediction if available
+        try:
+            # Import and use enhanced prediction
+            import sys
+            import os
+            llm_path = os.path.join(os.path.dirname(__file__), 'llm')
+            if llm_path not in sys.path:
+                sys.path.append(llm_path)
+            
+            from emoji_predictor import predict_emoji_for_text
+            
+            # Convert words to text for prediction
+            text = " ".join(str(word) for word in words if word)
+            predicted_emoji = predict_emoji_for_text(text, config_path="./config")
+            
+            if predicted_emoji != "❓":
+                logger.info("Enhanced ML predicted '%s' for words '%s'", predicted_emoji, words)
+            
+        except ImportError:
+            logger.debug("Enhanced prediction not available, using default emoji")
+        except Exception as e:
+            logger.debug("Enhanced prediction failed: %s", str(e))
+        
+        logger.debug("Adding '%s' to emoji_dict with emoji '%s'.", words, predicted_emoji)
+        add_words_to_emoji_dict(words, predicted_emoji)
 
-    return "❓"
+    return predicted_emoji
 
 def process_event(event):
     """Process a single calendar event."""
